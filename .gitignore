@@ -1,6 +1,9 @@
 node_modules/
 .artifacts/
 .integration/
+.test-sandbox/
+__pycache__/
+*.py[cod]
 coverage/
 .env
 .env.*
