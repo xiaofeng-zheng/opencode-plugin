@@ -1,0 +1,54 @@
+{
+  "plugins": [
+    {
+      "package": "file:///absolute/path/opencode-plugin/plugins/dynamic-api-key",
+      "options": {
+        "providers": {
+          "rotating-compatible": {
+            "command": [
+              "/absolute/path/to/node",
+              "/absolute/path/opencode-plugin/plugins/dynamic-api-key/examples/mint-demo.mjs",
+              "--json"
+            ],
+            "ttlSeconds": 240,
+            "refreshAheadSeconds": 20,
+            "timeoutSeconds": 5,
+            "format": "json",
+            "allowedOrigins": [
+              "http://127.0.0.1:8787"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "providers": {
+    "rotating-compatible": {
+      "name": "Dynamic key local probe (example only)",
+      "package": "@opencode/ai/providers/openai/chat",
+      "env": [],
+      "settings": {
+        "baseURL": "http://127.0.0.1:8787/v1",
+        "transport": "http"
+      },
+      "models": {
+        "probe": {
+          "name": "Local probe (not a real model)",
+          "limit": {
+            "context": 8192,
+            "output": 1024
+          },
+          "capabilities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ],
+            "tools": false
+          }
+        }
+      }
+    }
+  }
+}

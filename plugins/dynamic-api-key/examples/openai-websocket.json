@@ -1,0 +1,30 @@
+{
+  "plugins": [
+    {
+      "package": "file:///absolute/path/opencode-plugin/plugins/dynamic-api-key",
+      "options": {
+        "providers": {
+          "openai": {
+            "command": [
+              "/absolute/path/mint",
+              "--plain"
+            ],
+            "ttlSeconds": 3300,
+            "refreshAheadSeconds": 60,
+            "timeoutSeconds": 15,
+            "allowedOrigins": [
+              "https://api.openai.com"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "providers": {
+    "openai": {
+      "settings": {
+        "transport": "websocket"
+      }
+    }
+  }
+}

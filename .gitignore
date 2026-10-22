@@ -1,0 +1,9 @@
+node_modules/
+.artifacts/
+.integration/
+coverage/
+.env
+.env.*
+*.tgz
+*.zip
+.DS_Store
