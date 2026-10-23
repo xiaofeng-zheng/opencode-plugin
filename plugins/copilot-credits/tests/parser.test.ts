@@ -76,7 +76,7 @@ test("additional allowance separate and reset precedence is UNIX seconds", () =>
   for (const field of ["quota_reset_date_utc", "quota_reset_date", "limited_user_reset_date"]) {
     assert.equal(parseQuota(fixture({ entitlement: 1, remaining: 1 }, { token_based_billing: true, [field]: "2027-02-01" }), NOW).resetAt, "2027-02-01T00:00:00.000Z")
   }
-  assert.match(details(s), /额外使用: 12.5 \/ 50 AI credits/)
+  assert.match(details(s), /Additional usage: 12.5 \/ 50 AI credits/)
 })
 test("zero reset sentinel (number/string) falls back to the validated root date", () => {
   for (const quota_reset_at of [0, "0"]) {
@@ -86,7 +86,7 @@ test("zero reset sentinel (number/string) falls back to the validated root date"
       quota_reset_date: "2026-12-01",
     }), NOW)
     assert.equal(s.resetAt, "2026-11-01T00:00:00.000Z")
-    assert.match(details(s), /重置 \(UTC\): 2026-11-01T00:00:00\.000Z/)
+    assert.match(details(s), /Reset \(UTC\): 2026-11-01T00:00:00\.000Z/)
     assert.doesNotMatch(details(s), /1970-01-01/)
   }
 })
@@ -95,7 +95,7 @@ test("zero reset without a valid fallback returns null, never 1970", () => {
     for (const dates of [{}, { quota_reset_date_utc: "invalid", quota_reset_date: "2026-02-30", limited_user_reset_date: null }]) {
       const s = parseQuota(fixture({ entitlement: 100, remaining: 25, quota_reset_at }, { token_based_billing: true, ...dates }), NOW)
       assert.equal(s.resetAt, null)
-      assert.match(details(s), /重置 \(UTC\): 未知/)
+      assert.match(details(s), /Reset \(UTC\): unknown/)
     }
   }
 })

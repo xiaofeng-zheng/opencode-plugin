@@ -1,41 +1,39 @@
-# dynamic-api-key 验证说明
+# Dynamic API key verification history
 
-## 已验证范围
+This is a **historical record**, translated from the [verification document at commit 7090da0](https://github.com/xiaofeng-zheng/opencode-plugin/blob/7090da09ccbbde2b2210731f7975f0c7a4253826/plugins/dynamic-api-key/docs/verification.md). It preserves previously reported results, not a new test run or verification of later source, packaging, or installer changes. Machine-specific runtime logs were not committed.
 
-- OpenCode server **2.0.32** 与 **2.1.2**：各 25 项真实 HTTP/WebSocket 集成用例通过。
-- Node **22.22.3**：87 项单元测试通过。
-- Node **20.20.2**：86 项通过、1 项明确跳过（上游 Host 测试工具依赖 Node >=22.15 的 `registerHooks`，插件运行时不导入该工具）。
-- TypeScript strict typecheck、构建、npm pack、全新 tarball 安装与真实 server 目录加载通过。
-- npm 包含实际 `server.js` 入口；安装包逐字节校验，测试没有使用替代 wrapper 冒充安装成功。
+## Recorded checks
 
-## 关键场景
+- OpenCode servers **2.0.32** and **2.1.2** each passed **25** real HTTP/WebSocket integration cases.
+- Node **22.22.3** passed **87** unit tests.
+- Node **20.20.2** passed **86**, with **1 explicitly skipped**: the upstream Host test helper depends on Node >=22.15 `registerHooks`. The plugin runtime does not import that helper.
+- Strict TypeScript typechecking, building, npm packing, fresh tarball installation, and real-server directory loading passed.
+- The npm package contained the actual `server.js` entry. Installed bytes were checked; the test did not use a substitute wrapper to claim installation success.
 
-HTTP：同一个 Session 中 A/A 命中缓存，TTL 后换 B，server PID 不变；并发刷新只启动一个 command；非零退出、超时、空输出阻断请求且 upstream 计数不增加；恢复、401 按 generation 失效、原生静态 key 覆盖、自定义 header、JSON expiry 与 origin 限制。
+The record states that the original plugin's runtime code stayed unchanged when imported into the multi-plugin layout and that directory-related checks were rerun.
 
-WebSocket：真实 Upgrade 和 outbound frames；相同 key 复用、新 key 重连；失败刷新不发送 frame；通过延迟 Upgrade 使 lease 在 handshake/send 之间过期，验证零 frame 阻断及恢复。不以 HTTP fallback 当成 WS 通过。
+## Recorded scenarios
 
-独立核心安全复核未发现 Critical / Important 问题。保留的可用性边界：握手成功后、发送前连接取消或失败，下一次握手可能保守拒绝一次，再次调用可恢复；此行为有回归测试，不会放行旧 key。
+**HTTP:** A/A cache reuse within one Session, B after TTL with an unchanged server PID, one command for concurrent refreshes, and no additional upstream request on nonzero exit, timeout, or empty output. The record also covers recovery, generation-scoped 401 invalidation, replacement of native static authentication, custom headers, JSON expiry, and origin restrictions.
 
-## 复跑
+**WebSocket:** real Upgrades and outbound frames, socket reuse for the same key, reconnect for a new key, and no frame after failed refresh. Delayed Upgrade caused expiry between handshake and send; the probe observed zero-frame rejection and subsequent recovery. HTTP fallback was not counted as a WebSocket pass.
 
-```sh
-npm ci
-npm run typecheck
-npm test
-npm run build
-node scripts/integration.mjs --self-test
-node scripts/integration.mjs   --binary /absolute/path/opencode-2.0.32   --binary /absolute/path/opencode-2.1.2   --output .artifacts/integration.json
-```
+A separate core safety review was recorded as finding no **Critical / Important** issues. That is a historical review outcome, not a guarantee for subsequent revisions. The documented availability trade-off remains: if a connection is cancelled or fails after handshake but before send, the next handshake can be conservatively rejected once; a later call recovers without allowing the old key. A regression test covered that behavior.
 
-使用实际安装包测试时，把 `--plugin` 指向安装后的包目录。报告应显示 `pluginPackaging.mode: direct-package-directory`，并确认 `fullPluginMatrixPassed: true`。`--http-only`、`--runtime-probe` 或 JS-file debug wrapper 不等于完整包验收。
+## Reproducing checks
 
-本仓库不提交含本机路径、进程 ID 的运行日志；harness 会生成可复核报告。原插件导入多插件目录时保持运行时代码不变，并重跑目录相关测试。
+Use the [build and integration guide](integration.md) from the plugin source directory. It preserves the source checks, harness self-test, multi-version matrix, package-loading requirements, and isolation rules.
 
-## 未承诺范围
+For actual distributable acceptance, point `--plugin` at the installed package directory. Require `pluginPackaging.mode: direct-package-directory` and `fullPluginMatrixPassed: true` in the report. `--http-only`, `--runtime-probe`, and a JS-file debug wrapper are not complete package acceptance.
 
-- 无 Session 的 `generate.text`、任意第三方 SDK/插件组合。
-- 所有 title/compaction/retry 排列的逐一集成覆盖。
-- 真实厂商签发服务、Windows/macOS。
-- OS 级网络沙箱、JS 字符串物理归零或 TTL 到期强制中断进行中的 stream。
+The harness generates reviewable local reports containing machine-specific paths and process/session IDs; those reports are not committed. It uses private servers and loopback upstreams, not real-provider requests or installation into a shared service.
 
-更多安全、权限与环境说明见 [README](../README.md)。
+## Not established by this record
+
+- Sessionless `generate.text` or arbitrary third-party SDK/plugin combinations.
+- Every possible title/compaction/retry combination as an individual integration case.
+- Real vendor token-issuance services, OAuth migration, or native Windows/macOS runtimes.
+- An OS-level network sandbox, physical zeroing of JS strings, or forced interruption of streams when TTL expires.
+- Loading/activation in a particular user's configuration or verification of the new user-level installer.
+
+See the [reference](reference.md) for the runtime, permission, and environment boundaries.

@@ -1,39 +1,33 @@
-# 验证说明
+# Copilot credits verification history
 
-本插件从独立项目引入 `plugins/copilot-credits/`，运行时代码和测试保持不变；仅补充仓库元数据、路径说明及插件索引。原目录保留，node_modules、测试沙盒、数据库和本机运行日志不提交。
+This is a **historical record**, translated from the [verification document at commit 7090da0](https://github.com/xiaofeng-zheng/opencode-plugin/blob/7090da09ccbbde2b2210731f7975f0c7a4253826/plugins/copilot-credits/docs/verification.md). It reports checks performed when the standalone project was imported into `plugins/copilot-credits/`. It is not a new test run or verification of later code, packaging, or installer revisions. Local runtime logs were not committed.
 
-## 本次导入后的实际检查
+The import record states that runtime code and tests were unchanged, with repository metadata, path documentation, and the plugin index added. The original directory was retained; `node_modules`, test sandboxes, databases, and local logs were not copied into the repository.
 
-- Node.js 22.22.3：`npm ci`、`npm run typecheck`、`npm test` 成功，**35 tests / 35 pass / 0 fail**。
-- `npm run build` 使用 Solid universal / OpenTUI preset 预编译 TUI JSX。
-- `npm run pack:check` 成功：从 `.artifacts/package/` 打包，在干净 consumer 安装，并用官方 Host 验证 local-directory 与 npm 的 server / TUI / RPC 入口。
-- 运行包 **17 个文件**与构建清单和实际安装内容逐字节一致，包含预编译的 `src/tui.js`，不包含原始 `src/tui.tsx`。
+## Recorded source and package checks
 
-## 标准 OpenCode 2.1.2 Bun CLI
+- With Node.js **22.22.3**, `npm ci`, `npm run typecheck`, and `npm test` succeeded: **35 tests / 35 pass / 0 fail**.
+- `npm run build` precompiled TUI JSX using the Solid universal / OpenTUI preset.
+- `npm run pack:check` succeeded: packaging from `.artifacts/package/`, installing in a clean consumer, and resolving local-directory and npm server/TUI/RPC entries with the official Host.
+- The runtime package's **17 files** matched the build manifest and actual installed contents byte for byte. It contained precompiled `src/tui.js`, not raw `src/tui.tsx`.
 
-使用安装后的真实 tarball，启动独立 HOME/XDG/DB、独立密码和显式私有 endpoint 的测试进程。
+## Recorded standard OpenCode 2.1.2 Bun CLI checks
 
-1. **未连接账户**：实际 RPC 返回 disconnected，而不是伪造零额度；首页 footer 与 `/copilot` 详情可见。
-2. **合成配额 fixture**：会话 prompt footer、`/copilot` 详情、配额计算和零重置时间的日期回退正确。
-3. 未带测试认证的 RPC 请求返回 HTTP 401。
-4. 两个场景均没有尝试或转发模型请求；TUI 和私有 server 均以 exit 0 结束。
+The historical probes used the real installed tarball, isolated HOME/XDG/database paths, a separate password, and an explicit private endpoint.
 
-测试没有查询真实 Copilot 账户，没有修改或重启现有共享 service。合成数据不是用户实际余额。
+1. **Disconnected account:** actual RPC returned disconnected rather than a fabricated zero allowance; the home footer and `/copilot` details were visible.
+2. **Synthetic quota fixture:** the session prompt footer, `/copilot` details, quota calculation, and zero-reset date fallback behaved correctly.
+3. RPC requests without test authentication returned HTTP 401.
+4. Neither scenario attempted or forwarded a model request; both TUI and private server exited with status 0.
 
-## 复跑
+Those probes did not query a real Copilot account or modify/restart an existing shared service. Synthetic data is not a user's actual balance.
 
-在本插件目录执行：
+## Reproducing checks
 
-```sh
-npm ci
-npm run typecheck
-npm test
-npm run build
-npm run pack:check
-python3 scripts/host-probe.py --binary /absolute/path/opencode --tui
-python3 scripts/host-probe.py --binary /absolute/path/opencode --tui --session --synthetic-fixture
-```
+Follow the [build and host-probe guide](integration.md) from the plugin source directory. It preserves the build/package commands and disconnected/synthetic host-probe invocations. Rerunning host probes starts isolated test processes and needs appropriate authorization; the user-level installer does not activate OpenCode for you.
 
-`--binary` 使用标准 2.1.2 CLI。不要直接在源码根运行 `npm pack`；发布包需要预编译的 JSX。源代码与 minimal runtime 包用途不同，详见 [README](../README.md)。
+Use the standard 2.1.2 CLI for the historically documented host cases. Do not directly pack the source root: the distributable needs precompiled JSX. Reports belong in ignored `.artifacts/`, and test sandboxes in ignored `.test-sandbox/`.
 
-运行日志与 JSON 报告写入忽略的 `.artifacts/`；测试沙盒位于忽略的 `.test-sandbox/`。不承诺 Node 版 OpenCode、mini、2.0.32 共享 server 跨版本加载、Enterprise 或真实账户额度查询的普遍兼容性。
+## Not established by this record
+
+Node-distribution OpenCode, `mini`, cross-version loading into a 2.0.32 shared server, Enterprise, native Windows/macOS runtimes, and universal real-account quota access remain outside the recorded evidence. Source/package checks also do not prove that a particular user's running server or TUI has loaded the plugin.

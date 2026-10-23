@@ -65,7 +65,7 @@ function tuiHarness(options: Record<string, unknown> = { refreshSeconds: 0 }) {
   let text = "", response: unknown = parseQuota({ token_based_billing: true, quota_snapshots: { premium_interactions: { entitlement: 100, remaining: 25 } } }, 100000)
   let layer!: KeymapLayer, listener: ((event: { data: { integrationID: string } }) => void) | undefined
   const slots: SlotClaim[] = [], calls: Array<{ input: unknown; options: { location: { directory: string }; signal: AbortSignal } }> = []
-  const dialogs: string[] = []
+  const dialogs: Array<{ title: string; message: string }> = []
   let removed = 0, stopped = 0
   let location: { directory: string } | undefined = { directory: "/synthetic/current" }
   let transport = async () => response
@@ -73,7 +73,7 @@ function tuiHarness(options: Record<string, unknown> = { refreshSeconds: 0 }) {
     options, get location() { return location },
     client: { rpc: (contract: unknown) => { assert.equal(contract, Credits); return { get: async (input: unknown, options: typeof calls[number]["options"]) => { calls.push({ input, options }); return transport() } } } },
     data: { location: { default: () => ({ directory: "/synthetic/default" }) }, on: (_name: string, fn: typeof listener) => { listener = fn; return () => { stopped++ } } },
-    ui: { slot: (claim: SlotClaim) => { slots.push(claim); return () => { removed++ } }, dialog: { alert: async (input: { message: string }) => { dialogs.push(input.message) } } },
+    ui: { slot: (claim: SlotClaim) => { slots.push(claim); return () => { removed++ } }, dialog: { alert: async (input: typeof dialogs[number]) => { dialogs.push(input) } } },
     keymap: { layer: (factory: () => KeymapLayer) => { layer = factory() } },
   } as unknown as Context
   const off = setupTui(ctx, line => line(), value => { text = value }, () => text)
@@ -83,27 +83,29 @@ function tuiHarness(options: Record<string, unknown> = { refreshSeconds: 0 }) {
 }
 test("TUI both append slots, direct RPC output, current location, slash forces refresh/details", async () => {
   const h = tuiHarness()
-  assert.equal(h.text(), "Copilot: 查询中…")
+  assert.equal(h.text(), "Copilot: loading…")
   await tick()
   assert.deepEqual(h.slots.map(s => s.append), ["home.footer.status", "prompt.footer.status"])
   assert.match(h.text(), /75 \/ 100 AI credits used \(75%\)/)
   assert.equal(h.calls[0]?.options.location.directory, "/synthetic/current")
   const command = h.layer().commands?.[0]
   assert.equal(command?.slash?.name, "copilot")
+  assert.equal(command?.title, "Copilot credits")
   await command?.run?.()
-  assert.deepEqual(h.calls.at(-1)?.input, { force: true }); assert.match(h.dialogs[0]!, /剩余: 25 AI credits/)
+  assert.deepEqual(h.calls.at(-1)?.input, { force: true }); assert.match(h.dialogs[0]!.message, /Remaining: 25 AI credits/)
+  assert.equal(h.dialogs[0]?.title, "Copilot credits")
   h.off(); assert.equal(h.removed(), 2); assert.equal(h.stopped(), 1)
 })
 test("TUI errors are unknown, account event clears old balance, late results ignored on unload", async () => {
   const h = tuiHarness(); await tick()
   h.transport(async () => { throw new Error("synthetic secret") })
   await h.layer().commands?.[0]?.run?.()
-  assert.match(h.text(), /unknown/); assert.doesNotMatch(h.dialogs[0]!, /synthetic secret/)
+  assert.match(h.text(), /unknown/); assert.doesNotMatch(h.dialogs[0]!.message, /synthetic secret/)
   let release!: (value: unknown) => void
   h.transport(async () => new Promise(resolve => { release = resolve }))
-  h.switch(); assert.equal(h.text(), "Copilot: 查询中…")
+  h.switch(); assert.equal(h.text(), "Copilot: loading…")
   h.off(); assert.equal(h.calls.at(-1)?.options.signal.aborted, true)
-  release(empty()); await tick(); assert.equal(h.text(), "Copilot: 查询中…")
+  release(empty()); await tick(); assert.equal(h.text(), "Copilot: loading…")
 })
 test("location change while waiting never displays old location balance", async () => {
   const h = tuiHarness(); await tick()

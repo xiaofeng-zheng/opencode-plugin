@@ -16,7 +16,7 @@ export function setupTui(ctx: Context, view: (line: () => string) => JSX.Element
     const controller = new AbortController()
     pending.add(controller)
     const location = ctx.location ?? ctx.data.location.default()
-    publish("Copilot: 查询中…")
+    publish("Copilot: loading…")
     try {
       const result = SnapshotSchema.parse(await rpc.get({ force }, { location, signal: controller.signal }))
       if (id !== generation || disposed) return
@@ -53,7 +53,7 @@ export function setupTui(ctx: Context, view: (line: () => string) => JSX.Element
       run: async () => {
         if (disposed) return
         await refresh(true)
-        if (!disposed) await ctx.ui.dialog.alert({ title: "Copilot 额度", message: details(snapshot) })
+        if (!disposed) await ctx.ui.dialog.alert({ title: "Copilot credits", message: details(snapshot) })
       },
     }] }))
     const interval = seconds(ctx.options, "refreshSeconds", 300, 30, 3600)

@@ -20,6 +20,7 @@ import signal
 import struct
 import subprocess
 import termios
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -29,17 +30,22 @@ import urllib.error
 ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser()
 parser.add_argument("--binary", required=True)
+parser.add_argument("--expected-version", default="2.1.2", help="Exact standard CLI version under test")
 parser.add_argument("--package", default=str(ROOT / ".test-sandbox/clean-install/node_modules/opencode-copilot-credits"))
 parser.add_argument("--tui", action="store_true")
 parser.add_argument("--session", action="store_true", help="Create an empty synthetic session to check prompt.footer.status")
 parser.add_argument("--synthetic-fixture", action="store_true", help="Inject the published finite TBB regression, never live credentials/network")
 args = parser.parse_args()
+if not re.fullmatch(r"2\.\d+\.\d+", args.expected_version):
+    parser.error("--expected-version must be an exact OpenCode v2 version")
 binary = Path(args.binary).resolve(strict=True)
 package = Path(args.package).resolve(strict=True)
 if Path("/etc/opencode").exists():
     raise SystemExit("System config discovery exists; isolation must be reviewed before this probe.")
 run_id = time.strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3)
-sandbox = ROOT / ".test-sandbox" / ("host-" + run_id)
+scratch = Path(os.environ.get("TMPDIR") or str(ROOT / ".test-sandbox"))
+scratch.mkdir(parents=True, exist_ok=True)
+sandbox = Path(tempfile.mkdtemp(prefix="opencode-copilot-host-", dir=scratch))
 artifacts = ROOT / ".artifacts" / ("host-" + run_id)
 artifacts.mkdir(parents=True)
 for name in ["home", "tmp", "xdg-config", "data", "cache", "state", "config", "project"]:
@@ -80,7 +86,9 @@ proxy = None
 try:
     version = subprocess.run([str(binary), "--version"], env=env, cwd=sandbox / "project", capture_output=True, text=True, timeout=20)
     (artifacts / "version.log").write_text(version.stdout + version.stderr)
-    assert version.returncode == 0 and "2.1.2" in version.stdout, "Expected standard installed 2.1.2"
+    matched_version = re.search(r"\bv?(2\.\d+\.\d+)\b", version.stdout)
+    assert version.returncode == 0 and matched_version and matched_version.group(1) == args.expected_version, "Unexpected standard CLI version"
+    report["clientVersion"] = matched_version.group(1)
     stderr = open(artifacts / "server-stderr.log", "wb")
     server = subprocess.Popen([str(binary), "serve", "--stdio", "--hostname", "127.0.0.1", "--port", "0"], env=env, cwd=sandbox / "project", stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr, start_new_session=True)
     deadline = time.monotonic() + 45
@@ -154,6 +162,7 @@ try:
             return json.load(response)
 
     info = request("/api/info")
+    assert info["version"] == args.expected_version, "Private server version must match the requested test version"
     (artifacts / "info.json").write_text(json.dumps(info, indent=2))
     plugins = request("/api/plugin?" + query)
     (artifacts / "plugins.json").write_text(json.dumps(plugins, indent=2))
@@ -211,6 +220,8 @@ try:
         boot = transcript.decode("utf-8", "replace")
         if "Plugin failed" in boot:
             raise RuntimeError("Packaged TUI plugin failed to load; no slash input submitted")
+        if "Copilot:" not in boot:
+            raise RuntimeError("Copilot footer is not rendered; no slash input submitted")
         os.write(master, b"/copilot")
         collect(2)
         os.write(master, b"\r")
@@ -219,11 +230,11 @@ try:
         plain = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
         (artifacts / "tui-text.txt").write_text(plain)
         expected_footer = "12,192.3 / 13,000 AI credits used (93.8%)" if args.synthetic_fixture else "Copilot: unknown"
-        expected_detail = "独立绝对消费:" if args.synthetic_fixture else "未连接 Copilot 账户"
+        expected_detail = "Absolute consumption:" if args.synthetic_fixture else "No Copilot account connected"
         report["checks"]["promptFooter" if args.session else "homeFooter"] = "passed" if expected_footer in plain else "unverified"
         report["checks"]["slashDetails"] = "passed" if expected_detail in plain else "unverified"
         if args.synthetic_fixture:
-            assert "重置 (UTC): 2026-11-01T00:00:00.000Z" in plain, "Rendered details must show the root reset date"
+            assert "Reset (UTC): 2026-11-01T00:00:00.000Z" in plain, "Rendered details must show the root reset date"
             assert "1970-01-01" not in plain, "Rendered details must not show the absent sentinel as 1970"
             report["checks"]["resetFallbackDetails"] = "passed: 2026-11-01T00:00:00.000Z, no 1970"
         os.write(master, b"\x1b")
