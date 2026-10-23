@@ -1,7 +1,7 @@
 {
   "plugins": [
     {
-      "package": "file:///absolute/path/opencode-plugin/plugins/dynamic-api-key",
+      "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key",
       "options": {
         "providers": {
           "rotating-compatible": {

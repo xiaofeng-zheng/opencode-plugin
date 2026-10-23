@@ -21,10 +21,10 @@ test('npm publishes and exports the same server entry', async () => {
   assert.match(await readFile(path.join(root, 'server.js'), 'utf8'), /export\s*\{\s*default\s*\}\s*from\s*['"]\.\/dist\/index\.js['"]/);
 });
 
-test('all install examples configure a directory rather than a discarded file path', async () => {
+test('all install examples use the native GitHub subdirectory package', async () => {
   for (const name of ['openai-http.json', 'openai-websocket.json', 'custom-provider.json']) {
     const config = JSON.parse(await readFile(path.join(root, 'examples', name), 'utf8'));
     const target = config.plugins[0].package as string;
-    assert.equal(target, 'file:///absolute/path/opencode-plugin/plugins/dynamic-api-key', name);
+    assert.equal(target, 'github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key', name);
   }
 });

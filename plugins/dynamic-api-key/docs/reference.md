@@ -2,7 +2,7 @@
 
 For installation and updates, use the [plugin README](../README.md). This document covers provider configuration, command output, and runtime safety. For packaging or private-server tests, use the [integration guide](integration.md).
 
-The plugin targets **OpenCode v2 Session** requests. It is ESM, declares Node.js >=20 for its runtime, and pins `@opencode/plugin@2.0.32`. The repository installer and upstream Host-based package checks require **Node.js >=22.15**. Its default export is `Plugin.define({ id: 'dynamic-api-key', setup })`.
+The plugin targets **OpenCode v2 Session** requests. It is ESM, declares Node.js >=20 for its runtime, and pins `@opencode/plugin@2.0.32`. Upstream Host-based package checks require **Node.js >=22.15**. Its default export is `Plugin.define({ id: 'dynamic-api-key', setup })`.
 
 After loading, the first request for each configured provider obtains a key on demand. Keys remain in memory and replace the configured authentication header before Session HTTP sends and WebSocket handshakes. Rotation does not write `providers.openai.settings.apiKey`, call `provider.reload()`, or require a service restart. Initial loading and changes to options still depend on OpenCode; this is not a process-wide credential service or dynamic configuration reloader.
 
@@ -10,9 +10,7 @@ After loading, the first request for each configured provider obtains a key on d
 
 OpenCode v2 uses a `plugins` array with `{ "package": ..., "options": ... }` objects, not v1 tuples. Plugin options are not provider settings. Preserve existing plugins and provider definitions when making a separate configuration change.
 
-The installer manages the package directory and plugin entry for you. A manual entry must point to a **package directory**, never `server.js` or `dist/index.js`. Historical v2.0.32/v2.1.2 checks found that explicitly configured file paths were ignored. The package's root `server.js` re-exports the compiled plugin for directory discovery.
-
-The example files below use source-checkout paths for manual configuration; replace paths with the intended installed package directory when appropriate. For `install.sh --options`, extract **only the `options` object**, not the complete example. The installer does not modify provider definitions.
+Use the GitHub locator from the README as `package`. Native `opencode plugin add` manages the cache and global entry; configure options on that entry without replacing unrelated settings. Provider definitions remain separate.
 
 ### Existing OpenAI provider over HTTP
 
@@ -22,7 +20,7 @@ The example files below use source-checkout paths for manual configuration; repl
 {
   "plugins": [
     {
-      "package": "file:///absolute/path/opencode-plugin/plugins/dynamic-api-key",
+      "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key",
       "options": {
         "providers": {
           "openai": {
@@ -164,7 +162,7 @@ The command executes as the **OpenCode server's OS user**, with that user's perm
 - Configuring a command grants code-execution authority. Trust and review the configuration, scripts, and directory permissions. Prefer argv; review shell strings. Prevent untrusted repositories from replacing the program, and honor administrative policy.
 - Stdout and stderr are each limited to **64 KiB**. Stderr is drained without retention or printing. Nonzero exit, spawn failure, timeout, abort, and invalid output produce sanitized errors without a raw Error `cause` or command output. Timeout includes a short termination/escalation cleanup period; return is not guaranteed at the exact timeout millisecond.
 - POSIX execution uses a separate process group, terminated with SIGTERM then SIGKILL, including descendants in that group. An early direct-child exit does not cancel necessary escalation. Commands must not daemonize or escape using `setsid`; this is not an OS sandbox.
-- Windows termination is best-effort for the child, without a Job Object-level whole-tree guarantee. The recorded child-process tests ran on Linux, not Windows/macOS. Historical core and packed-package checks on Node.js 20.20.2/22.22.3 are detailed in the [verification history](verification.md); upstream Host checks require Node >=22.15 and are skipped on Node 20. The runtime does not import that Host tool.
+- Windows termination is best-effort for the child, without a Job Object-level whole-tree guarantee. Subprocess checks here are Linux-based. Upstream Host checks require Node >=22.15 and are skipped on Node 20; the runtime does not import that Host tool.
 - Real keys exist in memory, command output, and request headers, not provider/model settings, storage, credential records, or user configuration. Clearing references/Buffers cannot guarantee physical erasure of every JS string. Other plugins, proxies, upstreams, and transport logs are outside this plugin's redaction control; keep authentication headers out of those logs.
 - The allowlist checks only the URL seen by the hook. It is not a DNS or network sandbox. Later plugins can change URLs/headers, lower-level redirects can cross origins, and custom SDKs can bypass hooks. Audit those paths separately; do not trust endpoints that redirect or forward custom authentication headers unexpectedly.
 
