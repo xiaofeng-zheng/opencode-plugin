@@ -8,7 +8,7 @@ Use `opencode debug paths` to locate global `opencode.json(c)`. Replace only the
 
 ```json
 {
-  "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits",
+  "package": "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/copilot-credits",
   "options": { "cacheTtlSeconds": 300, "timeoutSeconds": 10, "refreshSeconds": 300 }
 }
 ```

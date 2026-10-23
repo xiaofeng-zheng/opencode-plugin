@@ -8,8 +8,8 @@
 Requires OpenCode v2 and Git. Run the command for the plugin you need:
 
 ```sh
-opencode plugin add "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits"
-opencode plugin add "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key"
+opencode plugin add "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/copilot-credits"
+opencode plugin add "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key"
 ```
 
 OpenCode manages the user-level installation. Copilot needs a native `github-copilot` connection to show quota; dynamic-api-key needs [provider options](plugins/dynamic-api-key/README.md#configure) before use.
@@ -17,8 +17,8 @@ OpenCode manages the user-level installation. Copilot needs a native `github-cop
 ## Update
 
 ```sh
-opencode plugin update "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits"
-opencode plugin update "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key"
+opencode plugin update "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/copilot-credits"
+opencode plugin update "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key"
 ```
 
 ## For AI agents

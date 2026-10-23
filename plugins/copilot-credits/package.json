@@ -6,12 +6,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xiaofeng-zheng/opencode-plugin.git",
+    "url": "git+https://github.com/xiaofeng-zheng/opencode-plugins.git",
     "directory": "plugins/copilot-credits"
   },
-  "homepage": "https://github.com/xiaofeng-zheng/opencode-plugin/tree/main/plugins/copilot-credits",
+  "homepage": "https://github.com/xiaofeng-zheng/opencode-plugins/tree/main/plugins/copilot-credits",
   "bugs": {
-    "url": "https://github.com/xiaofeng-zheng/opencode-plugin/issues"
+    "url": "https://github.com/xiaofeng-zheng/opencode-plugins/issues"
   },
   "main": "./index.js",
   "types": "./index.d.ts",

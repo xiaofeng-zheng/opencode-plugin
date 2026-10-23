@@ -20,7 +20,7 @@ Use the GitHub locator from the README as `package`. Native `opencode plugin add
 {
   "plugins": [
     {
-      "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key",
+      "package": "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key",
       "options": {
         "providers": {
           "openai": {

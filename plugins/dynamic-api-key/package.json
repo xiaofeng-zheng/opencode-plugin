@@ -40,12 +40,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xiaofeng-zheng/opencode-plugin.git",
+    "url": "git+https://github.com/xiaofeng-zheng/opencode-plugins.git",
     "directory": "plugins/dynamic-api-key"
   },
-  "homepage": "https://github.com/xiaofeng-zheng/opencode-plugin/tree/main/plugins/dynamic-api-key",
+  "homepage": "https://github.com/xiaofeng-zheng/opencode-plugins/tree/main/plugins/dynamic-api-key",
   "bugs": {
-    "url": "https://github.com/xiaofeng-zheng/opencode-plugin/issues"
+    "url": "https://github.com/xiaofeng-zheng/opencode-plugins/issues"
   },
   "license": "UNLICENSED"
 }

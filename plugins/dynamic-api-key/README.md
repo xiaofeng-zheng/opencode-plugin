@@ -5,7 +5,7 @@ Obtain short-lived keys from a trusted command for OpenCode v2 Session HTTP/WebS
 ## Install
 
 ```sh
-opencode plugin add "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key"
+opencode plugin add "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key"
 ```
 
 Requires OpenCode v2 and Git. Installation does not supply credentials; configure valid options before using the plugin.
@@ -16,7 +16,7 @@ Locate global `opencode.json(c)` with `opencode debug paths`. Replace only this 
 
 ```json
 {
-  "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key",
+  "package": "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key",
   "options": {
     "providers": {
       "openai": {
@@ -35,7 +35,7 @@ Use your real provider ID, command, TTL, and exact allowed origins. The provider
 ## Update
 
 ```sh
-opencode plugin update "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key"
+opencode plugin update "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key"
 ```
 
-[Options and safety](https://github.com/xiaofeng-zheng/opencode-plugin/blob/main/plugins/dynamic-api-key/docs/reference.md) · [AI-agent installation checklist](https://github.com/xiaofeng-zheng/opencode-plugin#for-ai-agents)
+[Options and safety](https://github.com/xiaofeng-zheng/opencode-plugins/blob/main/plugins/dynamic-api-key/docs/reference.md) · [AI-agent installation checklist](https://github.com/xiaofeng-zheng/opencode-plugins#for-ai-agents)

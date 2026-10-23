@@ -1,5 +1,5 @@
 {
-  "name": "opencode-plugin",
+  "name": "opencode-plugins",
   "private": true,
   "type": "module",
   "engines": { "node": ">=22.15" },

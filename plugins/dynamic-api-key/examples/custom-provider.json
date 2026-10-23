@@ -1,13 +1,13 @@
 {
   "plugins": [
     {
-      "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key",
+      "package": "github:xiaofeng-zheng/opencode-plugins#main::path:plugins/dynamic-api-key",
       "options": {
         "providers": {
           "rotating-compatible": {
             "command": [
               "/absolute/path/to/node",
-              "/absolute/path/opencode-plugin/plugins/dynamic-api-key/examples/mint-demo.mjs",
+              "/absolute/path/opencode-plugins/plugins/dynamic-api-key/examples/mint-demo.mjs",
               "--json"
             ],
             "ttlSeconds": 240,
