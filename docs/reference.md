@@ -22,7 +22,8 @@ plugins/
   copilot-credits/
     package.json
     package-lock.json
-    index.ts / server.ts / tui.tsx / rpc.ts
+    index.js / server.js / tui.js / rpc.js
+    dist/
     src/
     tests/
     scripts/
@@ -35,7 +36,9 @@ plugins/
 Use each plugin's existing packaging contract:
 
 - **dynamic-api-key** keeps the compiled `dist/` and directory-discovery `server.js` in the repository and uses `npm pack` from its package root. See its [build and integration guide](../plugins/dynamic-api-key/docs/integration.md).
-- **copilot-credits** stages a runtime package with precompiled TUI JSX in ignored `.artifacts/package/` and uses `npm run pack:check` from the source package directory. Directly packing the source root is not equivalent. See its [build and host-probe guide](../plugins/copilot-credits/docs/integration.md).
+- **copilot-credits** keeps precompiled JavaScript and declarations in tracked `dist/`, with root JS entrypoints. `npm run compile` updates these files; `npm pack --ignore-scripts` packs the package root directly, and `npm run pack:check` verifies a clean consumer. See its [build and host-probe guide](../plugins/copilot-credits/docs/integration.md).
+
+Both Git-facing manifests omit `build`, preparation/install lifecycle scripts, and `workspaces`, so native Git installation does not invoke a compiler. Developer builds use `npm run compile`; commit the resulting distribution files with source changes.
 
 Keep source checks, clean tarball installation, real private-server loading, and live account/provider access as separate evidence levels. Historical results are documented for [dynamic-api-key](../plugins/dynamic-api-key/docs/verification.md) and [copilot-credits](../plugins/copilot-credits/docs/verification.md); they are not new verification of subsequent changes or of the user-level installer. Current English-language and installer checks are recorded in [installer verification](installer-verification.md).
 

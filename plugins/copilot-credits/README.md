@@ -1,73 +1,46 @@
 # opencode-copilot-credits
 
-Show GitHub Copilot account quota in OpenCode's home/prompt footer. Use `/copilot` to refresh and view balance, reset time, overage, fetch time, and safe error messages. It does not make model requests.
+Show GitHub Copilot account quota in OpenCode's home/prompt footer. `/copilot` refreshes and displays balance, reset time, overage, fetch time, and safe errors. No model request is made.
 
-The recorded runtime verification covers the **OpenCode 2.1.2 standard Bun CLI and full TUI** on Linux, not `mini` or the Node distribution. See the [verification history](docs/verification.md).
+## Install
 
-## Install for your user
-
-You need **Node.js >=22.15**, **npm**, **Git** for cloning, and an existing **OpenCode v2 standard CLI**. Native Windows/macOS runtimes have not been verified.
-
-Clone the repository if needed:
+With the OpenCode v2 standard CLI and Git installed:
 
 ```sh
-git clone https://github.com/xiaofeng-zheng/opencode-plugin.git
-cd opencode-plugin
+opencode plugin add "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits"
 ```
 
-Review the checkout, `install.sh`, and its helper/package scripts. Then run as the intended user, **without `sudo`**, from the **repository root**, not this plugin directory:
+Use the same command in Bash, PowerShell, or Command Prompt. OpenCode downloads the ready-to-load package and registers it in the user-level server configuration. No npm publication, manual checkout/build, or GitHub workflow is required.
 
-```sh
-./install.sh copilot-credits
-```
+Installation can succeed without an account connection. To fetch quota, the server needs OpenCode's native `github-copilot` login for GitHub.com; `gh login` is not a substitute. Never copy or export tokens. Open the **full TUI** to use the footer and `/copilot`; `mini` is not supported.
 
-The installer places the runtime at:
+## Optional settings
 
-```text
-<config-dir>/installed-plugins/copilot-credits/node_modules/opencode-copilot-credits
-```
-
-It adds or updates this plugin's server entry in `opencode.json` or `opencode.jsonc`, and its TUI entry in `cli.json`. If neither server configuration exists, it creates `opencode.jsonc`; if both exist, it refuses the ambiguity. Existing unrelated settings, plugins, comments, and separate server/TUI options are preserved. Changed files are backed up before replacement.
-
-`<config-dir>` defaults to `OPENCODE_CONFIG_DIR`, otherwise `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Use `--config-dir DIR` to select another directory, `--opencode PATH` to select an existing executable, or `--help` for usage. See [all installer safeguards](../../README.md#paths-flags-and-safeguards).
-
-### Optional settings
-
-Defaults are a 300-second cache and refresh interval, with a 10-second request timeout. To replace this plugin's options explicitly, put only the options object in a JSON file:
+Defaults are a 300-second cache/refresh interval and a 10-second request timeout. To customize them, replace only the matching string entry in the global `opencode.json(c)` with this object, preserving all other entries:
 
 ```json
-{ "cacheTtlSeconds": 300, "timeoutSeconds": 10, "refreshSeconds": 300 }
+{
+  "package": "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits",
+  "options": { "cacheTtlSeconds": 300, "timeoutSeconds": 10, "refreshSeconds": 300 }
+}
 ```
+
+Find the global directory with `opencode debug paths`. For remote servers, the package must also be available on the client; configure the same locator in the client's `cli.json` `plugins` array. A server-local installation does not install files on another machine.
+
+## Update
 
 ```sh
-./install.sh copilot-credits --options /absolute/path/options.json
+opencode plugin update "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits"
 ```
 
-This replaces the selected plugin's options on both configured sides; it does not merge fields. Omit `--options` to keep the existing per-side options. For accepted ranges and remote-client setup, see the [reference](docs/reference.md).
-
-## Update and load
-
-To update from the current reviewed checkout, rerun:
-
-```sh
-./install.sh copilot-credits
-```
-
-To obtain remote changes, preserve local work and separately run `git pull --ff-only`, review the changes, then rerun the installer. It neither pulls code nor discards local changes.
-
-Installation works **without a connected account**. To fetch quota later, the server needs OpenCode's native `github-copilot` login for GitHub.com. `gh login` is not a substitute. The plugin does not log in, switch accounts, or require you to copy/export tokens.
-
-The installer does not start/restart OpenCode or query an account. A successful install is not proof that a running server or TUI loaded it. Reopening the **full TUI** and an approved server reload may be needed. With a remote server, package/configuration paths must exist on their respective server and client hosts; a local installation does not update the remote host.
-
-Once loaded, `/copilot` refreshes the account snapshot while respecting GitHub rate-limit backoff. A missing connection is `disconnected`, not a fabricated zero balance. Quota is an internal, best-effort GitHub snapshot, not an authoritative invoice; see [units and limits](docs/reference.md#units-and-quota-semantics).
+Installed/configured is not proof of activation. Check `opencode plugin list` when starting or connecting to the intended server is acceptable; obtain approval before a shared-service reload/restart. Quota is an internal, best-effort GitHub snapshot, not an invoice. A disconnected account is not shown as a fabricated zero balance.
 
 ## Instructions for AI agents
 
-1. Scope this installation to **`copilot-credits`** and the intended user's configuration directory. Check Node.js >=22.15, npm, Git if cloning, and the existing standard OpenCode v2 executable with passive version/help checks; do not install or upgrade OpenCode implicitly.
-2. Inspect the trusted checkout, `install.sh`, and its helper/package scripts. Preserve user changes and existing configuration. Pull remote code only when requested, with `git pull --ff-only`, and review it before execution.
-3. Run `./install.sh copilot-credits` from the repository root. Add `--config-dir DIR` or `--opencode PATH` if needed. Pass `--options /absolute/path/options.json` only for an explicitly requested options replacement; otherwise preserve separate server/TUI settings.
-4. Read the printed paths and inspect this plugin's server/TUI entries and installed package files. Confirm backups and unrelated configuration preservation without displaying secrets or whole configuration files. Stop on ambiguities or symlink refusals instead of bypassing them.
-5. Allow disconnected installation. Quota access requires a separate native OpenCode `github-copilot` login, not `gh login`; never ask for/export tokens or read credential stores. Do not make model requests.
-6. Distinguish **installed/configured** from **active**. Use passive `opencode service status` first; `opencode plugin list` may start a stopped server, so obtain approval before that happens. Require approval for reopening the TUI or any reload/restart. Report actual paths, checks, backups, and remaining activation/authentication work, not assumed success.
+- Confirm the intended OpenCode executable, user configuration, and Git availability; use passive version/help/path checks first.
+- Review/back up relevant configuration and run the exact native install command above. Preserve other plugins and existing options; no online bootstrap or workflow authorization is needed.
+- Read back this locator's configuration entry and the command outcome without exposing credentials. Do not silently replace an existing local installation.
+- Allow disconnected installation. Never request/export tokens or make a model request to verify it.
+- Report installation separately from activation. `opencode plugin list` may start a stopped server; ask before starting or restarting one.
 
-For configuration, quota interpretation, and security boundaries, read the [reference](docs/reference.md). Maintainer-only procedures are in the [integration guide](docs/integration.md).
+[Configuration and limits](https://github.com/xiaofeng-zheng/opencode-plugin/blob/main/plugins/copilot-credits/docs/reference.md) · [Verification history](https://github.com/xiaofeng-zheng/opencode-plugin/blob/main/plugins/copilot-credits/docs/verification.md)

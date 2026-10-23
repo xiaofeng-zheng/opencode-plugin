@@ -1,90 +1,53 @@
 # OpenCode plugins
 
-User-level plugins for OpenCode v2:
+User-level plugins for the OpenCode v2 standard CLI:
 
-| Plugin | Purpose |
-| --- | --- |
-| [copilot-credits](plugins/copilot-credits/README.md) | Show GitHub Copilot account quota in the full TUI footer and `/copilot` dialog, without model requests. Package: `opencode-copilot-credits`. |
-| [dynamic-api-key](plugins/dynamic-api-key/README.md) | Obtain short-lived API keys from a trusted command for Session HTTP/WebSocket requests. Package: `opencode-dynamic-api-key`. |
+- **[copilot-credits](plugins/copilot-credits/README.md)** — Copilot account quota in the full TUI footer and `/copilot` dialog, without model requests.
+- **[dynamic-api-key](plugins/dynamic-api-key/README.md)** — Short-lived API keys from a trusted command for Session HTTP/WebSocket requests.
 
 ## Install
 
-Requirements: **Node.js >=22.15**, **npm**, **Git** for cloning, and an existing **OpenCode v2 standard CLI**. The documented environment is Linux; native Windows/macOS runtime compatibility has not been verified. Copilot's full-TUI verification was on the standard Bun CLI **2.1.2**; see each plugin's verification history for its tested scope.
+Use OpenCode's native plugin manager with Git installed. Choose the plugin you need:
 
 ```sh
-git clone https://github.com/xiaofeng-zheng/opencode-plugin.git
-cd opencode-plugin
+opencode plugin add "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits"
+opencode plugin add "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key"
 ```
 
-Review the checkout, `install.sh`, and the scripts it invokes before running it. Run as the intended user, **without `sudo`**. From the repository root, choose the plugin you want:
+The same syntax works in Bash, PowerShell, and Command Prompt. OpenCode installs the precompiled package into its user-level cache and updates global configuration. No manual clone/build, npm publication, GitHub workflow, or online bootstrap is required. Keep the `::path:plugins/...` suffix: the repository root is a collection, not a plugin.
 
-```sh
-./install.sh copilot-credits
-```
+**Copilot credits:** quota access requires OpenCode's native `github-copilot` login, not `gh login`. Installation can succeed while disconnected. Use the full TUI, not `mini`.
 
-Or, after preparing [dynamic-api-key options](plugins/dynamic-api-key/README.md#prepare-options):
+**Dynamic API key:** [configure the trusted command, provider ID, TTL, and allowed origins](plugins/dynamic-api-key/README.md#configure) after installation and before model use. Setup fails closed until valid options are present.
 
-```sh
-./install.sh dynamic-api-key --options /absolute/path/options.json
-```
-
-The options file must be a JSON object containing **only that plugin's options**, not a complete OpenCode configuration. A first-time dynamic-key installation needs the real provider ID, credential command, allowed origins, and TTL. Copilot can be installed while disconnected; quota access later requires OpenCode's native `github-copilot` login, not `gh login`. No token export is needed.
+Installation is separate from activation. `opencode plugin list` can check loading, but may start a stopped server. Native Windows/macOS runtime behavior has not been verified in this repository's local checks.
 
 ## Update
 
-Rerun the command for the selected plugin to install the code in the **current checkout**. Omit `--options` to preserve existing options, including separate Copilot server/TUI options:
-
 ```sh
-./install.sh copilot-credits
-./install.sh dynamic-api-key
+opencode plugin update "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/copilot-credits"
+opencode plugin update "github:xiaofeng-zheng/opencode-plugin#main::path:plugins/dynamic-api-key"
 ```
 
-These are independent commands; run only the one you need. Remote updates are a separate, explicit action. Preserve local changes, then, if you want the remote revision:
-
-```sh
-git status --short
-git pull --ff-only
-```
-
-Review the changed code before rerunning the installer. The installer does not pull remote code or discard a dirty checkout. Passing `--options FILE` explicitly **replaces only the selected plugin's options**; it does not merge individual option fields.
-
-## Paths, flags, and safeguards
-
-The default configuration directory is `OPENCODE_CONFIG_DIR` when set, otherwise `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Select the directory used by the intended OpenCode setup: `--config-dir` only changes the install destination, not a running server/client's environment or configuration discovery.
-
-| Flag | Meaning |
-| --- | --- |
-| `--config-dir DIR` | Select a different user configuration directory. |
-| `--options FILE` | Replace the selected plugin's options with this JSON object. Omit on updates to retain existing options. |
-| `--opencode PATH` | Select the existing OpenCode v2 executable. |
-| `--help` | Show installer usage. |
-
-The installer builds and packages the current checkout, installs production dependencies, and manages the runtime at:
-
-```text
-<config-dir>/installed-plugins/<slug>/node_modules/<npm-name>
-```
-
-This is outside the autodiscovery `plugins/` directory. The installer updates only the matching `plugins` entry in the existing `opencode.json` **or** `opencode.jsonc`; it creates `opencode.jsonc` when neither exists. Copilot also gets a TUI entry in `cli.json`. Unrelated settings, plugins, comments, and existing per-side options are preserved, and changed files are backed up before replacement.
-
-Simultaneous `opencode.json` and `opencode.jsonc`, ambiguous plugin entries, linked configuration files, or symlinked managed targets can cause a refusal. Backups retain the actual displaced file inside a private `.bak-*` directory. Resolve the reported ambiguity deliberately rather than deleting configuration or user changes to force installation.
-
-The installer never runs credential commands, reads auth tokens, installs/upgrades OpenCode, makes model requests, or starts/restarts services. **Installed and configured does not mean active.** OpenCode still needs to load the plugin; reopening the full TUI or an approved reload may be necessary. Installation is not permission to restart a shared server.
+Run only the command for the intended plugin. Repeating `plugin add` avoids an identical configuration entry but does not replace `plugin update`. To pin a revision, replace `main` with a complete commit SHA; exact revisions are not automatically updated.
 
 ## Instructions for AI agents
 
-Use this workflow when a user asks you to install or update a plugin:
+1. Confirm the requested plugin and intended OpenCode installation. Check `opencode --version`, `opencode plugin add --help`, and `git --version`. `opencode debug paths` locates user configuration without starting a server.
+2. Review/back up relevant configuration and run the exact native install command above. Preserve unrelated plugins, providers, and options; do not silently remove an older local installation or switch accounts.
+3. For `dynamic-api-key`, obtain missing real provider/command/TTL/origin values and update only its matching plugin entry. Never invent credentials, broaden origins, or execute the credential command as an installation test. Copilot may remain disconnected; never request or export tokens.
+4. Read back the matching configuration entry and actual command result without dumping secrets. An identical locator already configured as an object retains its options.
+5. Distinguish installed/configured from active. Use `opencode service status` first and obtain approval before starting, reloading, or restarting a server/TUI. Do not make a model request to verify installation. Report actual results and remaining configuration work.
 
-1. **Confirm scope.** Ask which plugin only if it is unknown. Resolve the intended user configuration directory and existing OpenCode executable. Check Node.js >=22.15, npm, Git when cloning, and the standard OpenCode v2 CLI using passive version/help checks. A client version does not prove the running server's version.
-2. **Review trusted code.** Inspect the checkout, `install.sh`, and its helper/package scripts before execution. Preserve local changes and existing configuration. Fetch remote updates only when requested, using `git pull --ff-only`; review the result before installation. Do not reset or clean the user's checkout.
-3. **Collect only necessary options.** For a new `dynamic-api-key` installation, obtain the real provider ID, trusted command, exact allowed origins, and TTL if missing. Confirm that the provider is configured in OpenCode; the installer does not create provider definitions. Use the [options and safety reference](plugins/dynamic-api-key/docs/reference.md) for format, environment, or OAuth questions. Never invent credentials or widen origins to bypass an error. For Copilot, disconnected installation is valid; native OpenCode Copilot login is separate from `gh login`. Never ask for or export tokens.
-4. **Install explicitly.** From the reviewed repository root run `./install.sh copilot-credits`, or `./install.sh dynamic-api-key --options /absolute/path/options.json` for a first install. Use `--config-dir DIR` and `--opencode PATH` when needed. On updates omit `--options` unless the user requested replacement; preserve distinct server/TUI options.
-5. **Read back the result.** Inspect the printed installation/configuration/backup paths, the matching configuration entries, and the installed package files. Verify only the intended plugin changed, without dumping complete configurations, option values that may contain secrets, or credentials. Do not execute the credential command as an installation check.
-6. **Separate activation.** Report installed/configured status separately from active status. `opencode service status` can check service state without starting one. Use `opencode plugin list` only against the intended running server, or after explicit approval to start a stopped server. Obtain approval before reopening the TUI or reloading/restarting a service; do not make a model request to verify installation.
-7. **Report actual evidence.** Give the selected plugin, paths changed, backups, checks that really ran, and any unresolved load/authentication issue. Do not claim activation, account access, or runtime compatibility from installer success alone.
+## Local-checkout fallback
 
-## Further documentation
+The existing `install.sh` remains available for a reviewed local checkout on Linux. It requires Node.js >=22.15 and npm, manages a separate `installed-plugins/` directory, and backs up its own configuration changes:
 
-- Copilot: [options and quota semantics](plugins/copilot-credits/docs/reference.md), [verification history](plugins/copilot-credits/docs/verification.md).
-- Dynamic keys: [configuration and safety](plugins/dynamic-api-key/docs/reference.md), [verification history](plugins/dynamic-api-key/docs/verification.md).
-- Repository maintainers: [package and verification reference](docs/reference.md).
+```sh
+./install.sh copilot-credits
+./install.sh dynamic-api-key --options /absolute/path/options.json
+```
+
+Run from the repository root. Omit `--options` on later local updates to retain existing options; use `./install.sh --help` for path overrides. These local-script safeguards are separate from OpenCode's native plugin manager.
+
+Detailed configuration is in each plugin's reference documentation. Maintainer notes are in [docs/reference.md](docs/reference.md).

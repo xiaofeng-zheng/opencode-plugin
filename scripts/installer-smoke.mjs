@@ -113,7 +113,7 @@ try {
   let clientText = await readFile(clientFile, 'utf8');
   clientText = applyEdits(clientText, modify(clientText, ['plugins', 0, 'options', 'refreshSeconds'], 120, {}));
   await writeFile(clientFile, clientText);
-  const copilotRuntime = join(packagePath('copilot-credits'), 'src/format.ts');
+  const copilotRuntime = join(packagePath('copilot-credits'), 'dist/format.js');
   const expectedCopilot = sha(await readFile(copilotRuntime));
   await writeFile(copilotRuntime, '// Deliberately stale installed file for the update test.\n');
   const copilotConfig = await readFile(serverFile, 'utf8');

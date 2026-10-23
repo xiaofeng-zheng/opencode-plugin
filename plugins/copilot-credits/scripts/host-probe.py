@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser()
 parser.add_argument("--binary", required=True)
 parser.add_argument("--expected-version", default="2.1.2", help="Exact standard CLI version under test")
-parser.add_argument("--package", default=str(ROOT / ".test-sandbox/clean-install/node_modules/opencode-copilot-credits"))
+parser.add_argument("--package", help="Installed package directory; defaults to the last successful pack:check consumer")
 parser.add_argument("--tui", action="store_true")
 parser.add_argument("--session", action="store_true", help="Create an empty synthetic session to check prompt.footer.status")
 parser.add_argument("--synthetic-fixture", action="store_true", help="Inject the published finite TBB regression, never live credentials/network")
@@ -39,7 +39,16 @@ args = parser.parse_args()
 if not re.fullmatch(r"2\.\d+\.\d+", args.expected_version):
     parser.error("--expected-version must be an exact OpenCode v2 version")
 binary = Path(args.binary).resolve(strict=True)
-package = Path(args.package).resolve(strict=True)
+if args.package is None:
+    try:
+        pack_check = json.loads((ROOT / ".artifacts/pack-check.json").read_text())
+        if not pack_check.get("passed") or pack_check.get("name") != "opencode-copilot-credits":
+            raise ValueError("No successful package verification")
+        package = Path(pack_check["installedPackage"]).resolve(strict=True)
+    except (OSError, ValueError, KeyError):
+        parser.error("Run npm run pack:check first, or pass --package with the installed package directory")
+else:
+    package = Path(args.package).resolve(strict=True)
 if Path("/etc/opencode").exists():
     raise SystemExit("System config discovery exists; isolation must be reviewed before this probe.")
 run_id = time.strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3)
@@ -59,14 +68,14 @@ if args.synthetic_fixture:
         "entitlement": 13000, "quota_remaining": 807.7, "percent_remaining": 6.2, "credits_used": 14517,
         "overage_count": 0, "overage_entitlement": 100, "overage_permitted": False, "quota_reset_at": 0,
     }}}
-    (load_package / "server.ts").write_text(
-        'import { setupServer } from ' + json.dumps(str(package / "src/server.ts")) + ';\n'
+    (load_package / "server.js").write_text(
+        'import { setupServer } from ' + json.dumps((package / "dist/server.js").as_uri()) + ';\n'
         'export default { id: "copilot.credits.synthetic-probe", setup(ctx) { return setupServer(ctx, {\n'
         'account: async () => ({account: {key: "synthetic@github.com", host: "github.com", label: "SYNTHETIC fixture", token: "synthetic-not-a-credential"}}),\n'
         'now: () => 1792627200000, fetch: async () => Response.json(' + json.dumps(fixture) + ')\n'
         '}) }}\n')
-    (load_package / "tui.ts").write_text('export { default } from ' + json.dumps(str(package / "tui.tsx")) + ';\n')
-    (load_package / "rpc.ts").write_text('export * from ' + json.dumps(str(package / "rpc.ts")) + ';\n')
+    (load_package / "tui.js").write_text('export { default } from ' + json.dumps((package / "tui.js").as_uri()) + ';\n')
+    (load_package / "rpc.js").write_text('export * from ' + json.dumps((package / "rpc.js").as_uri()) + ';\n')
 env = {
     "PATH": "/usr/bin:/bin", "TERM": "xterm-256color", "LANG": "C.UTF-8",
     "HOME": str(sandbox / "home"), "OPENCODE_TEST_HOME": str(sandbox / "home"),

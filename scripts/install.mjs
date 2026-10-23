@@ -10,7 +10,7 @@ import { isDeepStrictEqual } from 'node:util';
 const ROOT = resolve(import.meta.dirname, '..');
 const MARKER = '.opencode-plugin-install.json';
 const PLUGINS = Object.freeze({
-  'copilot-credits': { name: 'opencode-copilot-credits', tui: true, packageDir: '.artifacts/package' },
+  'copilot-credits': { name: 'opencode-copilot-credits', tui: true, packageDir: '.' },
   'dynamic-api-key': { name: 'opencode-dynamic-api-key', tui: false, packageDir: '.' },
 });
 const NPM_FLAGS = ['--ignore-scripts', '--no-audit', '--no-fund', '--fetch-retries=1', '--fetch-timeout=20000'];
@@ -395,7 +395,7 @@ async function preparePackage(slug, stage) {
   const source = join(ROOT, 'plugins', slug);
   console.log(`Preparing ${slug} from this checkout...`);
   run('npm', ['ci', '--include=dev', ...NPM_FLAGS], { cwd: source });
-  run('npm', ['run', 'build'], { cwd: source });
+  run('npm', ['run', 'compile'], { cwd: source });
   const packageDir = resolve(source, plugin.packageDir);
   const artifacts = join(source, '.artifacts');
   await mkdir(artifacts, { recursive: true });
@@ -417,9 +417,9 @@ async function preparePackage(slug, stage) {
     if (!original.equals(copy)) throw new Error(`Installed package file differs from the packed source: ${file}`);
     hashes[file] = createHash('sha256').update(copy).digest('hex');
   }
-  const required = plugin.tui ? ['server.ts', 'tui.tsx', 'rpc.ts', 'src/tui.js'] : ['server.js', 'dist/index.js', 'dist/config.js'];
+  const required = plugin.tui ? ['index.js', 'server.js', 'tui.js', 'rpc.js', 'dist/server.js', 'dist/tui.js', 'dist/rpc.js'] : ['server.js', 'dist/index.js', 'dist/config.js'];
   for (const file of required) if (!own(hashes, file)) throw new Error(`Missing runtime entry: ${file}`);
-  if (plugin.tui && own(hashes, 'src/tui.tsx')) throw new Error('The distributed TUI must be precompiled.');
+  if (plugin.tui && files.some(file => /\.(?:ts|tsx)$/.test(file) && !file.endsWith('.d.ts'))) throw new Error('The distributed runtime must be precompiled.');
   await writeFile(join(stage, MARKER), JSON.stringify({ format: 1, slug, packageName: plugin.name, version: info.version, source: ROOT, installedAt: new Date().toISOString(), files: hashes }, null, 2) + '\n', { mode: 0o600 });
   return { installed, version: info.version, files: hashes };
 }

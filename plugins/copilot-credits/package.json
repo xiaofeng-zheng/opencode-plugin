@@ -1,6 +1,6 @@
 {
   "name": "opencode-copilot-credits",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GitHub Copilot account quota for the OpenCode 2 full TUI",
   "type": "module",
   "license": "MIT",
@@ -10,19 +10,85 @@
     "directory": "plugins/copilot-credits"
   },
   "homepage": "https://github.com/xiaofeng-zheng/opencode-plugin/tree/main/plugins/copilot-credits",
-  "bugs": { "url": "https://github.com/xiaofeng-zheng/opencode-plugin/issues" },
-  "exports": { ".": "./index.ts", "./server": "./server.ts", "./tui": "./tui.tsx", "./rpc": "./rpc.ts" },
-  "files": ["index.ts", "server.ts", "tui.tsx", "rpc.ts", "src/", "README.md", "LICENSE"],
+  "bugs": {
+    "url": "https://github.com/xiaofeng-zheng/opencode-plugin/issues"
+  },
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js"
+    },
+    "./server": {
+      "types": "./server.d.ts",
+      "import": "./server.js"
+    },
+    "./tui": {
+      "types": "./tui.d.ts",
+      "import": "./tui.js"
+    },
+    "./rpc": {
+      "types": "./rpc.d.ts",
+      "import": "./rpc.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "server.js",
+    "server.d.ts",
+    "tui.js",
+    "tui.d.ts",
+    "rpc.js",
+    "rpc.d.ts",
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "build": "node scripts/build.mjs",
+    "compile": "node scripts/build.mjs",
     "pack:check": "node scripts/pack-check.mjs"
   },
-  "dependencies": { "@opencode/plugin": "2.1.2", "zod": "4.3.6" },
-  "peerDependencies": { "@opentui/core": ">=0.6.6", "@opentui/solid": ">=0.6.6", "solid-js": ">=1.9.0" },
-  "peerDependenciesMeta": { "@opentui/core": {"optional": true}, "@opentui/solid": {"optional": true}, "solid-js": {"optional": true} },
-  "devDependencies": { "@types/node": "^22.0.0", "typescript": "~5.9.3", "tsx": "^4.20.0", "@opentui/core": "0.6.6", "@opentui/solid": "0.6.6", "solid-js": "1.9.12", "@babel/core": "7.29.7", "@babel/preset-typescript": "7.27.1", "babel-preset-solid": "1.9.12" },
-  "overrides": { "solid-js": { "seroval": "1.6.8" } },
-  "engines": { "node": ">=22" }
+  "dependencies": {
+    "@opencode/plugin": "2.1.2",
+    "zod": "4.3.6"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.6.6",
+    "@opentui/solid": ">=0.6.6",
+    "solid-js": ">=1.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~5.9.3",
+    "tsx": "^4.20.0",
+    "@opentui/core": "0.6.6",
+    "@opentui/solid": "0.6.6",
+    "solid-js": "1.9.12",
+    "@babel/core": "7.29.7",
+    "@babel/preset-typescript": "7.27.1",
+    "babel-preset-solid": "1.9.12"
+  },
+  "overrides": {
+    "solid-js": {
+      "seroval": "1.6.8"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }

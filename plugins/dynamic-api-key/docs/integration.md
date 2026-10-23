@@ -12,7 +12,7 @@ Use Node.js >=22.15 for the full set of checks, including upstream Host discover
 npm ci
 npm run typecheck
 npm test
-npm run build
+npm run compile
 mkdir -p .artifacts
 npm pack --pack-destination .artifacts
 ```

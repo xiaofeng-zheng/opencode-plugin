@@ -1,24 +1,38 @@
 {
   "name": "opencode-dynamic-api-key",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fail-closed, on-demand dynamic API keys for OpenCode v2 Session HTTP and WebSocket requests",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./server": { "types": "./dist/index.d.ts", "import": "./server.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/index.d.ts",
+      "import": "./server.js"
+    }
   },
-  "files": ["server.js", "dist", "README.md", "examples"],
+  "files": [
+    "server.js",
+    "dist",
+    "README.md",
+    "examples"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "node scripts/integration.mjs",
-    "build": "tsc -p tsconfig.build.json",
-    "prepack": "npm run build"
+    "compile": "tsc -p tsconfig.build.json"
   },
-  "dependencies": { "@opencode/plugin": "2.0.32" },
+  "dependencies": {
+    "@opencode/plugin": "2.0.32"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.20.0",
@@ -30,6 +44,8 @@
     "directory": "plugins/dynamic-api-key"
   },
   "homepage": "https://github.com/xiaofeng-zheng/opencode-plugin/tree/main/plugins/dynamic-api-key",
-  "bugs": { "url": "https://github.com/xiaofeng-zheng/opencode-plugin/issues" },
+  "bugs": {
+    "url": "https://github.com/xiaofeng-zheng/opencode-plugin/issues"
+  },
   "license": "UNLICENSED"
 }
