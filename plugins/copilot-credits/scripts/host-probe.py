@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Isolated, no-model standard CLI probe. Never discovers a running service or reads auth.
 
-python3 scripts/host-probe.py --binary /absolute/opencode --tui
+uv run --no-project --with pyte==0.8.2 python scripts/host-probe.py --binary /absolute/opencode --tui
 All inputs are synthetic/disconnected. Artifacts are not live-account results.
 """
 import argparse
@@ -9,6 +9,7 @@ import base64
 import fcntl
 import http.client
 import http.server
+import importlib
 import json
 import os
 from pathlib import Path
@@ -33,9 +34,15 @@ parser.add_argument("--binary", required=True)
 parser.add_argument("--expected-version", default="2.1.2", help="Exact standard CLI version under test")
 parser.add_argument("--package", help="Installed package directory; defaults to the last successful pack:check consumer")
 parser.add_argument("--tui", action="store_true")
-parser.add_argument("--session", action="store_true", help="Create an empty synthetic session to check prompt.footer.status")
+parser.add_argument("--session", action="store_true", help="Create an empty synthetic session to check sidebar.content")
 parser.add_argument("--synthetic-fixture", action="store_true", help="Inject the published finite TBB regression, never live credentials/network")
 args = parser.parse_args()
+terminal_emulator = None
+if args.tui:
+    try:
+        terminal_emulator = importlib.import_module("pyte")
+    except ImportError:
+        parser.error("TUI position checks require pyte; run with uv --no-project --with pyte==0.8.2")
 if not re.fullmatch(r"2\.\d+\.\d+", args.expected_version):
     parser.error("--expected-version must be an exact OpenCode v2 version")
 binary = Path(args.binary).resolve(strict=True)
@@ -85,7 +92,10 @@ env = {
     "OPENCODE_DB": str(sandbox / "opencode.db"), "OPENCODE_PASSWORD": password,
     "OPENCODE_CONFIG_PROJECT_DISABLE": "true", "OPENCODE_DISABLE_CLAUDE_CODE": "true",
     "OPENCODE_DISABLE_MODELS_FETCH": "true", "OPENCODE_DISABLE_FILEWATCHER": "true", "OPENCODE_DISABLE_FFF": "true",
-    "OPENCODE_CONFIG_CONTENT": json.dumps({"plugins": [str(load_package)], "autoupdate": False}),
+    "OPENCODE_CONFIG_CONTENT": json.dumps({
+        "plugins": [str(load_package)], "autoupdate": False,
+        "mcp": {"servers": {"layout-fixture": {"type": "local", "command": ["/bin/false"], "disabled": True}}},
+    }),
     "OPENCODE_CLI_CONFIG_CONTENT": json.dumps({"plugins": [str(load_package)]}),
 }
 report = {"synthetic": True, "fixtureInjected": args.synthetic_fixture, "package": str(package), "binary": str(binary), "checks": {}, "requests": [], "blockedModelRequests": [], "modelRequestsForwarded": 0}
@@ -195,11 +205,15 @@ try:
         assert result["output"]["status"] == "disconnected" and result["output"]["used"] is None
         report["checks"]["packagedServerRpc"] = "passed: disconnected, not zero"
     if args.tui:
+        assert terminal_emulator is not None
         master, slave = pty.openpty()
-        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 45, 150, 0, 0))
+        rows, columns = 45, 150
+        screen = terminal_emulator.Screen(columns, rows)
+        stream = terminal_emulator.ByteStream(screen)
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", rows, columns, 0, 0))
         tui_args = [str(binary), "--server", endpoint]
         if args.session:
-            session = request("/api/session", {"title": "Synthetic no-model footer probe", "location": {"directory": str(sandbox / "project")}})
+            session = request("/api/session", {"title": "Synthetic no-model sidebar probe", "location": {"directory": str(sandbox / "project")}})
             tui_args.extend(["--session", session["data"]["id"]])
         tui = subprocess.Popen(tui_args, env=env, cwd=sandbox / "project", stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
         os.close(slave)
@@ -215,6 +229,7 @@ try:
                 except OSError:
                     break
                 transcript.extend(chunk)
+                stream.feed(chunk)
                 # Standard terminal capability queries: answer only, never user/model input.
                 if b"\x1b[6n" in chunk:
                     os.write(master, b"\x1b[1;1R")
@@ -229,8 +244,35 @@ try:
         boot = transcript.decode("utf-8", "replace")
         if "Plugin failed" in boot:
             raise RuntimeError("Packaged TUI plugin failed to load; no slash input submitted")
-        if "Copilot:" not in boot:
-            raise RuntimeError("Copilot footer is not rendered; no slash input submitted")
+        # Check the current terminal cells before opening the dialog. A transcript
+        # substring can match stale frames, duplicate footers, or dialog content.
+        frame = screen.display
+        (artifacts / "tui-initial-screen.txt").write_text("\n".join(frame) + "\n")
+        credits = [(y, match.start()) for y, row in enumerate(frame) for match in re.finditer("Copilot:", row)]
+        assert len(credits) == 1, f"Expected one visible Copilot display, found {credits}"
+        credit_y, credit_x = credits[0]
+        if args.session:
+            mcp = [(y, row.index("MCP")) for y, row in enumerate(frame) if row.strip() == "MCP"]
+            fixture = [y for y, row in enumerate(frame) if "layout-fixture" in row]
+            assert len(mcp) == 1 and len(fixture) == 1, "Native MCP sidebar must remain visible"
+            assert credit_x == mcp[0][1] and credit_x > columns // 2, "Credits must be inside the right sidebar"
+            assert mcp[0][0] < fixture[0] < credit_y, "Credits must follow native MCP information"
+            visible_credits = " ".join(row[credit_x:].strip() for row in frame[credit_y:credit_y + 5])
+            surface = "sessionSidebar"
+        else:
+            mcp = [(y, row.index("0 MCP")) for y, row in enumerate(frame) if "0 MCP" in row]
+            assert len(mcp) == 1, "Native MCP footer count must remain visible"
+            assert credit_y == mcp[0][0] and credit_x > mcp[0][1], "Credits must follow MCP on the same footer row"
+            assert credit_y >= rows - 3, "Credits must be in the bottom information bar"
+            visible_credits = frame[credit_y][credit_x:]
+            surface = "homeFooter"
+        expected_credits = "12,192.3 / 13,000 AI credits used (93.8%)" if args.synthetic_fixture else "Copilot: unknown"
+        assert expected_credits in " ".join(visible_credits.split()), "Current surface must render the quota snapshot"
+        report["layout"] = {"surface": surface, "rows": rows, "columns": columns,
+                            "credits": {"row": credit_y + 1, "column": credit_x + 1},
+                            "mcp": {"row": mcp[0][0] + 1, "column": mcp[0][1] + 1}}
+        report["checks"][surface] = "passed"
+        report["checks"]["noDuplicatePromptFooter"] = True
         os.write(master, b"/copilot")
         collect(2)
         os.write(master, b"\r")
@@ -238,9 +280,7 @@ try:
         text = transcript.decode("utf-8", "replace")
         plain = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
         (artifacts / "tui-text.txt").write_text(plain)
-        expected_footer = "12,192.3 / 13,000 AI credits used (93.8%)" if args.synthetic_fixture else "Copilot: unknown"
         expected_detail = "Absolute consumption:" if args.synthetic_fixture else "No Copilot account connected"
-        report["checks"]["promptFooter" if args.session else "homeFooter"] = "passed" if expected_footer in plain else "unverified"
         report["checks"]["slashDetails"] = "passed" if expected_detail in plain else "unverified"
         if args.synthetic_fixture:
             assert "Reset (UTC): 2026-11-01T00:00:00.000Z" in plain, "Rendered details must show the root reset date"

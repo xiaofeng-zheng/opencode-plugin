@@ -1,6 +1,6 @@
 # OpenCode plugins
 
-- **[copilot-credits](plugins/copilot-credits/README.md)** — Copilot quota in the full TUI footer and `/copilot` dialog.
+- **[copilot-credits](plugins/copilot-credits/README.md)** — Copilot quota in the new-session footer, session sidebar, and `/copilot` dialog.
 - **[dynamic-api-key](plugins/dynamic-api-key/README.md)** — Short-lived API keys from a trusted command.
 
 ## Install

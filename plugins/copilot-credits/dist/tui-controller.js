@@ -55,7 +55,7 @@ export function setupTui(ctx, view, publish, line) {
       render: () => view(line)
     }));
     unregister.push(ctx.ui.slot({
-      append: "prompt.footer.status",
+      append: "sidebar.content",
       render: () => view(line)
     }));
     unregister.push(ctx.data.on("credential.switched", event => {

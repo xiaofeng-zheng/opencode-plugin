@@ -81,11 +81,17 @@ function tuiHarness(options: Record<string, unknown> = { refreshSeconds: 0 }) {
     respond: (value: unknown) => { response = value }, transport: (value: () => Promise<unknown>) => { transport = value },
     switch: () => listener?.({ data: { integrationID: "github-copilot" } }), move: () => { location = { directory: "/synthetic/new" } }, clearLocation: () => { location = undefined } }
 }
-test("TUI both append slots, direct RPC output, current location, slash forces refresh/details", async () => {
+test("TUI appends home status and session sidebar, never the prompt footer", async () => {
   const h = tuiHarness()
   assert.equal(h.text(), "Copilot: loading…")
   await tick()
-  assert.deepEqual(h.slots.map(s => s.append), ["home.footer.status", "prompt.footer.status"])
+  assert.deepEqual(h.slots.map(s => s.append), ["home.footer.status", "sidebar.content"])
+  assert.equal(h.slots.some(s => s.append === "prompt.footer.status"), false)
+  const [home, sidebar] = h.slots
+  assert.ok(home?.append === "home.footer.status")
+  assert.ok(sidebar?.append === "sidebar.content")
+  assert.equal(home.render({}), h.text())
+  assert.equal(sidebar.render({ sessionID: "synthetic-session" }), h.text())
   assert.match(h.text(), /75 \/ 100 AI credits used \(75%\)/)
   assert.equal(h.calls[0]?.options.location.directory, "/synthetic/current")
   const command = h.layer().commands?.[0]

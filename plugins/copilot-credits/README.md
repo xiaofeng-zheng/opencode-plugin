@@ -1,6 +1,6 @@
 # Copilot credits
 
-Show Copilot account quota in OpenCode's full TUI footer. `/copilot` refreshes the balance and reset details without a model request.
+Show Copilot quota after MCP information in the new-session bottom bar, and in the right sidebar during a session. Existing sidebar sections are preserved; sidebar visibility follows OpenCode. `/copilot` refreshes the balance and reset details without a model request.
 
 ## Install
 

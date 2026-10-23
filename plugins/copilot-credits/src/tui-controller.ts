@@ -41,7 +41,7 @@ export function setupTui(ctx: Context, view: (line: () => string) => JSX.Element
   }
   try {
     unregister.push(ctx.ui.slot({ append: "home.footer.status", render: () => view(line) }))
-    unregister.push(ctx.ui.slot({ append: "prompt.footer.status", render: () => view(line) }))
+    unregister.push(ctx.ui.slot({ append: "sidebar.content", render: () => view(line) }))
     unregister.push(ctx.data.on("credential.switched", event => {
       if (event.data.integrationID !== "github-copilot") return
       generation++; snapshot = empty("account_changed")
